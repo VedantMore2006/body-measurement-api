@@ -1,5 +1,6 @@
 FROM python:3.13-slim
 WORKDIR /app
+COPY .env /app/.env
 COPY . /app
 RUN pip install fastapi uvicorn opencv-python-headless numpy ultralytics
 # Download YOLO models if not included
