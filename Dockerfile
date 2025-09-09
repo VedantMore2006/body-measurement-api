@@ -18,7 +18,7 @@ COPY .env /app/.env
 COPY . /app
 
 # Install Python dependencies
-RUN pip install fastapi uvicorn opencv-python-headless numpy ultralytics
+RUN pip install fastapi uvicorn python-multipart opencv-python-headless numpy ultralytics
 
 # Preload models (fixed to avoid GUI issues)
 RUN python -c "from ultralytics import YOLO; YOLO('yolov8n.pt').load(); YOLO('yolov8n-pose.pt').load()"
