@@ -124,7 +124,7 @@ from ultralytics import YOLO
 import io
 
 app = FastAPI()
-
+##
 # Load models once on startup
 person_model = YOLO("yolov8n.pt")
 pose_model = YOLO("yolov8n-pose.pt")
