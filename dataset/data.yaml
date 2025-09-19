@@ -1,0 +1,7 @@
+train: images/train
+val: images/train # Using same image for val since it's just a test
+
+nc: 1 # number of classes
+
+names: ["a4"] # Replace with your actual class name
+
