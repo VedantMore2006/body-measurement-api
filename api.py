@@ -129,6 +129,10 @@ app = FastAPI()
 person_model = YOLO("yolov8n.pt")
 pose_model = YOLO("yolov8n-pose.pt")
 
+@app.get("/healthz")
+async def health_check():
+    print("Health check hit!")  # Debug
+    return {"status": "healthy"}
 
 @app.post("/detect/")
 async def detect_measurements(file: UploadFile = File(...)):
