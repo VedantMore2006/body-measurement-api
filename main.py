@@ -110,5 +110,5 @@ async def detect_measurements(file: UploadFile = File(...)):
 if __name__ == "__main__":
     import uvicorn
     import os
-    port = int(os.getenv("PORT", 8080))  # Updated to match buildpack default
+    port = int(os.getenv("PORT", 8000))  # Updated to match buildpack default
     uvicorn.run(app, host="0.0.0.0", port=port)
