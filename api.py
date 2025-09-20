@@ -117,17 +117,26 @@
 #     import uvicorn
 #
 #     uvicorn.run(app, host="0.0.0.0", port=8000)
+import uvicorn
 from fastapi import FastAPI, UploadFile, File
 import cv2
 import numpy as np
 from ultralytics import YOLO
 import io
 
+uvicorn.run(app, host="0.0.0.0", port=8000)
+
 app = FastAPI()
-##)))
+
 # Load models once on startup
 person_model = YOLO("yolov8n.pt")
 pose_model = YOLO("yolov8n-pose.pt")
+
+
+@app.get("/healthz")
+async def health_check():
+    print("Health check hit!")  # Debug
+    return {"status": "healthy"}
 
 
 @app.post("/detect/")
@@ -223,10 +232,6 @@ async def detect_measurements(file: UploadFile = File(...)):
 
 
 # Run with uvicorn
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
 #
 # from fastapi import FastAPI, UploadFile, File
 # import cv2
