@@ -6,10 +6,11 @@ import numpy as np
 from ultralytics import YOLO
 import io
 app = FastAPI()
-
+model = None
 # Load models once on startup
-person_model = YOLO("yolov8n.pt")
-pose_model = YOLO("yolov8n-pose.pt")
+person_model = None
+pose_model = None
+
 
 @app.get("/healthz")
 async def health_check():
@@ -18,6 +19,10 @@ async def health_check():
 
 @app.post("/detect/")
 async def detect_measurements(file: UploadFile = File(...)):
+    global model
+    if model is None:
+        person_model = YOLO("yolov8n.pt")
+        pose_model = YOLO("yolov8n-pose.pt")
     # Read image from uploaded file
     contents = await file.read()
     img = cv2.imdecode(np.frombuffer(contents, np.uint8), cv2.IMREAD_COLOR)
