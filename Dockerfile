@@ -24,4 +24,4 @@ RUN pip install fastapi uvicorn python-multipart opencv-python-headless numpy ul
 RUN python -c "from ultralytics import YOLO; YOLO('yolov8n.pt').load(); YOLO('yolov8n-pose.pt').load()"
 
 EXPOSE 8000
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "${PORT:-8000}"]
