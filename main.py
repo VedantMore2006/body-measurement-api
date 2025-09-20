@@ -18,25 +18,24 @@ import io
 import os # Import os for environment variable
 
 app = FastAPI()
-
+person_model = None
+pose_model = None
 # --- IMPORTANT CHANGE START ---
 # Load models once when the application starts
 # This will happen BEFORE the first request is served.
 # Cloud Run will wait for these to load before considering the container ready.
-person_model = YOLO("yolov8n.pt")
-pose_model = YOLO("yolov8n-pose.pt")
+
 # --- IMPORTANT CHANGE END ---
 
 
 @app.on_event("startup")
 async def startup_event():
     print("FastAPI application startup event: Models are already loaded.")
+    global person_model, pose_model
+    person_model = YOLO("yolov8n.pt")  # Person detection model
+    pose_model = YOLO("yolov8n-pose.pt")  # Pose estimation model
+    print("Models loaded successfully.")
 
-@app.get("/healthz")
-async def health_check():
-    # If the app starts, the models are loaded. So a simple status check is fine.
-    print("Health check hit!")
-    return {"status": "healthy"}
 
 @app.post("/detect/")
 async def detect_measurements(file: UploadFile = File(...)):
@@ -129,6 +128,11 @@ async def detect_measurements(file: UploadFile = File(...)):
 
     return {"error": "No pose data detected!"}
 
+@app.get("/healthz")
+async def health_check():
+    # If the app starts, the models are loaded. So a simple status check is fine.
+    print("Health check hit!")
+    return {"status": "healthy"}
 
 # Run with uvicorn
 if __name__ == "__main__":
