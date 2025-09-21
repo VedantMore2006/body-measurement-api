@@ -55,7 +55,7 @@ async def detect_measurements(file: UploadFile = File(...)):
             x1, y1, x2, y2 = map(int, box[:4])
             person_bbox = (x1, y1, x2, y2)
             bbox_height = y2 - y1
-            total_height_cm = bbox_height * scale_factor  # Remove -12
+            total_height_cm = round(bbox_height * scale_factor, 2)  # Round to 2 decimals
             cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
             cv2.putText(
                 img,
@@ -86,14 +86,14 @@ async def detect_measurements(file: UploadFile = File(...)):
         lk, rk = keypoints[13], keypoints[14]  # knees
         la, ra = keypoints[15], keypoints[16]  # ankles
 
-        ShoulderWidth = float(dist(ls, rs))
-        ChestWidth = float(ShoulderWidth * 0.9)
-        Waist = float(dist(lh, rh))
-        Hips = float(Waist * 1.05)
-        ArmLength = float(max(dist(ls, lw), dist(rs, rw)))
-        ShoulderToWaist = float(np.mean([dist(ls, lh), dist(rs, rh)]))
-        WaistToKnee = float(np.mean([dist(lh, lk), dist(rh, rk)]))
-        LegLength = float(np.mean([dist(lh, la), dist(rh, ra)]))
+        ShoulderWidth = round(float(dist(ls, rs)), 2)
+        ChestWidth = round(float(ShoulderWidth * 0.9), 2)
+        Waist = round(float(dist(lh, rh)), 2)
+        Hips = round(float(Waist * 1.05), 2)
+        ArmLength = round(float(max(dist(ls, lw), dist(rs, rw))), 2)
+        ShoulderToWaist = round(float(np.mean([dist(ls, lh), dist(rs, rh)])), 2)
+        WaistToKnee = round(float(np.mean([dist(lh, lk), dist(rh, rk)])), 2)
+        LegLength = round(float(np.mean([dist(lh, la), dist(rh, ra)])), 2)
         print(f"Keypoints: ls={ls}, rs={rs}, lh={lh}, rh={rh}")
 
         params = {
