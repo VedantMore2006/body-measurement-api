@@ -21,6 +21,7 @@ async def startup_event():
 async def health_check():
     print("Health check hit!")
     return {"status": "healthy"}
+#
 
 @app.post("/detect/")
 async def detect_measurements(file: UploadFile = File(...)):
