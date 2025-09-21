@@ -9,22 +9,20 @@ app = FastAPI()
 person_model = None
 pose_model = None
 
-@app.on_event("startup")
-async def startup_event():
-    print("FastAPI application startup: Models are loading...")
-    global person_model, pose_model
-    person_model = YOLO("yolov8n.pt")  # Person detection model
-    pose_model = YOLO("yolov8n-pose.pt")  # Pose estimation model
-    print("Models loaded successfully.")
-
 @app.get("/healthz")
 async def health_check():
     print("Health check hit!")
     return {"status": "healthy"}
-#
 
 @app.post("/detect/")
 async def detect_measurements(file: UploadFile = File(...)):
+    global person_model, pose_model
+    if person_model is None:
+        print("Loading person model...")
+        person_model = YOLO("yolov8n.pt")
+    if pose_model is None:
+        print("Loading pose model...")
+        pose_model = YOLO("yolov8n-pose.pt")
     contents = await file.read()
     img = cv2.imdecode(np.frombuffer(contents, np.uint8), cv2.IMREAD_COLOR)
 
@@ -39,12 +37,15 @@ async def detect_measurements(file: UploadFile = File(...)):
         if 1.3 < aspect_ratio < 1.5 and 400 < h < 700 and y < img.shape[0] * 0.6:
             a4_height_pixels = h
             cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            print(f"A4 detected: height_pixels={h}, aspect_ratio={aspect_ratio}")
             break
 
     if not a4_height_pixels:
+        print(f"No A4 detected! Contours checked: {len(contours)}")
         return {"error": "A4 not detected!"}
 
-    scale_factor = round(29.7 / a4_height_pixels, 4)
+    scale_factor = 29.7 / a4_height_pixels
+    print(f"Scale factor: {scale_factor}")
 
     # Person detection
     results = person_model(img)
@@ -54,7 +55,7 @@ async def detect_measurements(file: UploadFile = File(...)):
             x1, y1, x2, y2 = map(int, box[:4])
             person_bbox = (x1, y1, x2, y2)
             bbox_height = y2 - y1
-            total_height_cm = round(bbox_height * scale_factor, 2) - 12
+            total_height_cm = bbox_height * scale_factor  # Remove -12
             cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
             cv2.putText(
                 img,
@@ -74,7 +75,7 @@ async def detect_measurements(file: UploadFile = File(...)):
     pose_results = pose_model(img)
 
     def dist(p1, p2):
-        return round(np.linalg.norm(np.array(p1) - np.array(p2)) * scale_factor, 2)
+        return np.linalg.norm(np.array(p1) - np.array(p2)) * scale_factor
 
     for r in pose_results:
         keypoints = r.keypoints.xy.cpu().numpy()[0]
@@ -85,14 +86,15 @@ async def detect_measurements(file: UploadFile = File(...)):
         lk, rk = keypoints[13], keypoints[14]  # knees
         la, ra = keypoints[15], keypoints[16]  # ankles
 
-        ShoulderWidth = round(float(dist(ls, rs)), 2)
-        ChestWidth = round(float(ShoulderWidth * 0.9), 2)
-        Waist = round(float(dist(lh, rh)), 2)
-        Hips = round(float(Waist * 1.05), 2)
-        ArmLength = round(float(max(dist(ls, lw), dist(rs, rw))), 2)
-        ShoulderToWaist = round(float(np.mean([dist(ls, lh), dist(rs, rh)])), 2)
-        WaistToKnee = round(float(np.mean([dist(lh, lk), dist(rh, rk)])), 2)
-        LegLength = round(float(np.mean([dist(lh, la), dist(rh, ra)])), 2)
+        ShoulderWidth = float(dist(ls, rs))
+        ChestWidth = float(ShoulderWidth * 0.9)
+        Waist = float(dist(lh, rh))
+        Hips = float(Waist * 1.05)
+        ArmLength = float(max(dist(ls, lw), dist(rs, rw)))
+        ShoulderToWaist = float(np.mean([dist(ls, lh), dist(rs, rh)]))
+        WaistToKnee = float(np.mean([dist(lh, lk), dist(rh, rk)]))
+        LegLength = float(np.mean([dist(lh, la), dist(rh, ra)]))
+        print(f"Keypoints: ls={ls}, rs={rs}, lh={lh}, rh={rh}")
 
         params = {
             "Gender": "Needs classifier",
@@ -107,7 +109,7 @@ async def detect_measurements(file: UploadFile = File(...)):
             "LegLength_cm": LegLength,
             "TotalHeight_cm": total_height_cm,
         }
-        return params  # Fixed indent: aligned with 'for r in pose_results'
+        return params
 
     return {"error": "No pose data detected!"}
 
